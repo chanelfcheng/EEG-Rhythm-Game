@@ -87,7 +87,7 @@ def average_voltages(filt_eeg):
     avg_voltages = filt_eeg[eeg_keys].mean(axis=1)
     return avg_voltages
 
-def close_stream():
+def close_stream(trigger, recorder):
     trigger.close()
     recorder.stop()
 
