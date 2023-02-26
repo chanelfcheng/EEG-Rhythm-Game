@@ -27,10 +27,12 @@ if __name__ == "__main__":
     data1, timestamps1 = receiver.get_window(STREAM_NAME)
     
     
-    
     # receiver = StreamReceiver(bufsize=1, winsize=1, stream_name=STREAM_NAME)
     # # time.sleep(2)  # wait 2 seconds to fill LSL inlet.
     # receiver.acquire()
+    
+    viewer = StreamViewer(stream_name=STREAM_NAME)
+    viewer.start()
     
     trigger.close()
     recorder.stop()
@@ -39,6 +41,7 @@ if __name__ == "__main__":
     # filename = f'test{idx}-{STREAM_NAME}-raw.fif'
     # player = StreamPlayer(stream_name=STREAM_NAME, fif_file=filename)
     # player.start()
+    
         
     
     
