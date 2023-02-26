@@ -198,7 +198,7 @@ def main():
 
         filtered_data = testRecorded.filter_data(receiver=receiver, seconds_sleep=0, padlen=2)
         average_voltages = testRecorded.average_voltages(filtered_data)
-        # print("ave_volt:", average_voltages[0])
+        print("ave_volt:", average_voltages.mean())
         game.cursor.eeg_move(average_voltages.mean())
 
         game.update_screen()
