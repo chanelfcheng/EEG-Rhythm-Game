@@ -63,7 +63,9 @@ def init_stream(bufsize=1, winsize=0.25):
     time.sleep(2)  # wait 2 seconds to fill LSL inlet.
     receiver.acquire()
 
-def filter_data(seconds_sleep=2):
+    return recorder, trigger, receiver
+
+def filter_data(receiver, seconds_sleep=2):
     data1, timestamps1 = receiver.get_window(STREAM_NAME)
     data1 = np.delete(data1, np.s_[9:], axis=1)
     data1 = np.delete(data1, 0, axis=1)
