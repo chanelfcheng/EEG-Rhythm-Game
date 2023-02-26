@@ -124,6 +124,7 @@ if __name__ == "__main__":
         filt_eeg[eeg_keys] = filt_eeg[eeg_keys].apply(filtereeg, raw=True)
         print(filt_eeg)
         time.sleep(2)
+        receiver.acquire()
     
     
     ### View the stream in real-time (optional)

@@ -42,6 +42,10 @@ class Cursor:
     
     def eeg_move(self, voltage):
         self.obj = self.obj.move(0, voltage*1e2)
+        if self.obj.top < BAR_Y:
+            self.obj.top = BAR_Y
+        if self.obj.top + self.obj.height > BAR_Y + BAR_HEIGHT:
+            self.obj.top = BAR_Y + BAR_HEIGHT - self.obj.height
     
     def get_obj(self):
         return self.obj
