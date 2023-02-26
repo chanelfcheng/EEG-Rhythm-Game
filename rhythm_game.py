@@ -1,7 +1,8 @@
 import pygame
 import sys
+import random
 import time
-
+import math
 
 ##### CONFIG ###########
 pygame.init()
@@ -15,8 +16,8 @@ BAR_X = WINDOW_WIDTH * 0.9 * 0.05
 BAR_Y = WINDOW_HEIGHT * 0.9 * 0.05
 
 NOTE_COLOR = pygame.Color(0,255, 162) # green
-NOTE_WIDTH = 5
-NOTE_HEIGHT = 5
+NOTE_WIDTH = 20
+NOTE_HEIGHT = 20
 NOTE_START_X = WINDOW_WIDTH + 1
 
 CURSOR_COLOR = pygame.Color(255, 255, 255) # white
@@ -30,33 +31,40 @@ class Cursor:
     def __init__(self) -> None:
         self.obj = pygame.Rect(BAR_X-15, CURSOR_START_Y, CURSOR_WIDTH, CURSOR_HEIGHT)
     
-    def cursor_move(self):
+    def move(self):
         key = pygame.key.get_pressed()
         dist = 1
         if key[pygame.K_UP] and self.obj.top > BAR_Y:
            self.obj = self.obj.move(0, -dist)
         if key[pygame.K_DOWN] and self.obj.top + self.obj.height < BAR_Y + BAR_HEIGHT:
            self.obj = self.obj.move(0, dist)
-
-        print(self.obj.top, BAR_Y)
     
     def get_obj(self):
         return self.obj
 
-class Notes:
-
-    x_pos = -1
+class Note:
     
-    def __init__(self, y) -> None:
-        self.obj = pygame.Rect(Notes.x_pos, y)
+    def __init__(self, x, y) -> None:
+        self.obj = pygame.Rect(x, y, NOTE_WIDTH, NOTE_HEIGHT)
         
     def move(self):
-        self.obj.move(-1, 0)
+        self.obj = self.obj.move(-1, 0)
 
     def get_obj(self) -> pygame.Rect:
         return self.obj
 
+    def get_x(self) -> int:
+        return self.obj.left
+
+    def get_y(self) -> int:
+        return self.obj.top
+
 class RhythmGame:
+
+    unit_time = 250
+    notes_distance = 1000
+    min_notes = 10
+    max_notes = 20
     
     def __init__(self) -> None:
         self.window_width = 0.9 * WINDOW_WIDTH
@@ -67,6 +75,13 @@ class RhythmGame:
 
         self.cursor = Cursor()
         self.notes = []
+
+    def hit_effect(self, note: Note):
+        obj = note.get_obj()
+        for i in range(0, 100):
+            effect = pygame.draw.circle(self.screen, NOTE_COLOR, (obj.centerx, obj.centery), i, 5) 
+            # pygame.draw.rect(self.screen, NOTE_COLOR, effect)
+            pygame.display.flip()
 
     def update_screen(self) -> None:
         self.screen.fill((0, 0, 0)) # black
@@ -79,7 +94,6 @@ class RhythmGame:
             # get the note's obj(rect)
             self.draw_note(note.get_obj())
             
- 
     def display(self) -> None:
         self.update_screen()
         pygame.display.flip()
@@ -94,14 +108,64 @@ class RhythmGame:
     def draw_note(self, note_obj) -> None:
         pygame.draw.rect(self.screen, NOTE_COLOR, note_obj)
 
+    def handle_notes(self):
+        if len(self.notes) == 0:
+            prev_note_x = NOTE_START_X
+            prev_note_y = random.randint(math.ceil(BAR_Y + BAR_HEIGHT/2), math.ceil(BAR_Y + BAR_HEIGHT - NOTE_HEIGHT))
+
+        if len(self.notes) < RhythmGame.min_notes:
+            note_y = random.randint(math.ceil(BAR_Y), math.ceil(BAR_Y + BAR_HEIGHT - NOTE_HEIGHT))
+            if len(self.notes) > 0:
+                prev_note_x = self.notes[-1].get_x()
+                prev_note_y = self.notes[-1].get_y()
+                RhythmGame.notes_distance = RhythmGame.unit_time * random.randint(1, 4)
+                note_x = prev_note_x + RhythmGame.notes_distance
+            else:
+                note_x = NOTE_START_X
+
+            if self.is_valid_note(note_x, note_y, prev_note_x, prev_note_y):
+                self.create_note(note_x, note_y)
+            else:
+                rv = random.randint(1, 4) # 1, 2, 3, 4
+                if (rv == 1):
+                    # increase x 25%
+                    note_x += RhythmGame.notes_distance * random.randint(1, 2)    
+                else:
+                    offset = prev_note_y - note_y
+                    note_y += offset*0.25*random.randint(2, 4)
+                self.create_note(note_x, note_y)
+                # or decrease y 75%
+
+    def create_note(self, x, y) -> None:
+        self.notes.append(Note(x, y))
+
+    def is_valid_note(self, x, y, prev_x, prev_y) -> bool:
+        if abs(x - prev_x) <= 750 and abs(y - prev_y) >= 100:
+            return False
+        return True
+
 def main():
     game = RhythmGame()
     
+    # create a random number generator
+    random.seed(time.time())
+    
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
-        
-        game.cursor.cursor_move()
+
+        game.cursor.move()
+
+        game.handle_notes()
+
+
+        for note in game.notes:
+            note.move()
+            if note.get_x() < BAR_X+BAR_WIDTH/2:
+                game.hit_effect(note)
+                game.notes.remove(note)
+
         game.display()
         
 if __name__ == "__main__":
