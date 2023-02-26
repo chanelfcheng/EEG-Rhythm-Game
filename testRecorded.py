@@ -43,7 +43,7 @@ def filtereeg(eeg, sfreq=250, high_band=1, low_band=30, notch=60, padlen=None):
     
     return eeg_envelope
 
-def init_stream(bufsize=1, winsize=0.25):
+def init_stream(bufsize=1, winsize=0.25, seconds_sleep=2):
     idx = 0
 
     # Record a data stream
@@ -60,7 +60,7 @@ def init_stream(bufsize=1, winsize=0.25):
     
     # Receive data from stream
     receiver = StreamReceiver(bufsize=bufsize, winsize=winsize, stream_name=STREAM_NAME)
-    time.sleep(2)  # wait 2 seconds to fill LSL inlet.
+    time.sleep(seconds_sleep)  # wait 2 seconds to fill LSL inlet.
     receiver.acquire()
 
     return recorder, trigger, receiver
@@ -76,6 +76,8 @@ def filter_data(receiver, seconds_sleep=2, padlen=None):
     filt_eeg = df.copy()
     filt_eeg[eeg_keys] = filt_eeg[eeg_keys].apply(filtereeg, raw=True, padlen=padlen)
     time.sleep(seconds_sleep)
+
+    receiver.acquire()
 
     return filt_eeg
 
