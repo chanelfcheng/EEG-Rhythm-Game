@@ -81,6 +81,7 @@ def filter_data(receiver, seconds_sleep=2, padlen=27):
     return filt_eeg
 
 def average_voltage(filt_eeg):
+    filt_eeg = (filt_eeg-filt_eeg.mean())/filt_eeg.std()
     eeg_keys = ['EEG_' + str(i) for i in range(1, 9)]
     avg_voltage = np.nanmean(filt_eeg[eeg_keys])
     print(avg_voltage)
