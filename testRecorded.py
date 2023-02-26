@@ -9,7 +9,7 @@ import pandas as pd
 
 STREAM_NAME = 'Unicorn'
 
-def filtereeg(eeg, sfreq=250, high_band=1, low_band=30, notch=60):
+def filtereeg(eeg, sfreq=250, high_band=1, low_band=30, notch=60, padlen=27):
     """
     eeg: EEG data
     high: high-pass cut off frequency
@@ -30,7 +30,7 @@ def filtereeg(eeg, sfreq=250, high_band=1, low_band=30, notch=60):
     b0, a0 = sp.signal.butter(4, [high_stop, low_stop], btype='bandstop', analog=True)
     
     # filter EEG signal
-    eeg_filtered = sp.signal.filtfilt(b0, a0, eeg)
+    eeg_filtered = sp.signal.filtfilt(b0, a0, eeg, padlen=padlen)
     
     # rectify EEG signal
     eeg_rectified = abs(eeg_filtered)
@@ -39,7 +39,7 @@ def filtereeg(eeg, sfreq=250, high_band=1, low_band=30, notch=60):
     b1, a1 = sp.signal.butter(4, [high_band,low_band], btype='bandpass', analog=True)
     
     # filter EEG signal
-    eeg_envelope = sp.signal.filtfilt(b1, a1, eeg_rectified) 
+    eeg_envelope = sp.signal.filtfilt(b1, a1, eeg_rectified, padlen=padlen) 
     
     return eeg_envelope
 
@@ -65,7 +65,7 @@ def init_stream(bufsize=1, winsize=0.25):
 
     return recorder, trigger, receiver
 
-def filter_data(receiver, seconds_sleep=2):
+def filter_data(receiver, seconds_sleep=2, padlen=27):
     data1, timestamps1 = receiver.get_window(STREAM_NAME)
     data1 = np.delete(data1, np.s_[9:], axis=1)
     data1 = np.delete(data1, 0, axis=1)
@@ -74,7 +74,7 @@ def filter_data(receiver, seconds_sleep=2):
                                         'EEG_7', 'EEG_8'])
     eeg_keys = ['EEG_' + str(i) for i in range(1, 9)]
     filt_eeg = df.copy()
-    filt_eeg[eeg_keys] = filt_eeg[eeg_keys].apply(filtereeg, raw=True)
+    filt_eeg[eeg_keys] = filt_eeg[eeg_keys].apply(filtereeg, raw=True, padlen=padlen)
     print(filt_eeg)
     time.sleep(seconds_sleep)
 

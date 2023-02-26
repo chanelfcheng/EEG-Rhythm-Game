@@ -196,7 +196,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
 
-        filtered_data = testRecorded.filter_data(receiver=receiver, seconds_sleep=0)
+        filtered_data = testRecorded.filter_data(receiver=receiver, seconds_sleep=0, padlen=2)
         average_voltage = testRecorded.average_voltage(filtered_data)
         game.cursor.eeg_move(average_voltage)
 
