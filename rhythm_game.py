@@ -11,7 +11,7 @@ WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.get_desktop_sizes()[0]
 
 BAR_COLOR = pygame.Color(0,128,255) # blue
 BAR_WIDTH = WINDOW_WIDTH * 0.9 * 0.05
-BAR_HEIGHT = WINDOW_HEIGHT * 0.9 * 0.9
+BAR_HEIGHT = WINDOW_HEIGHT * 0.9 * 0.89
 BAR_X = WINDOW_WIDTH * 0.9 * 0.05
 BAR_Y = WINDOW_HEIGHT * 0.9 * 0.05
 
@@ -41,6 +41,12 @@ class Cursor:
     
     def get_obj(self):
         return self.obj
+    
+    def get_x(self):
+        return self.obj.left
+
+    def get_y(self):
+        return self.obj.top
 
 class Note:
     
@@ -59,6 +65,12 @@ class Note:
     def get_y(self) -> int:
         return self.obj.top
 
+    def is_touching_cursor(self, cursor_x, cursor_y):
+        if self.get_x() == (cursor_x + CURSOR_WIDTH)//2:
+            if self.get_y() >= cursor_y and self.get_y() <= cursor_y + CURSOR_HEIGHT:
+                return True
+        return False
+
 class RhythmGame:
 
     unit_time = 250
@@ -70,32 +82,55 @@ class RhythmGame:
         self.window_width = 0.9 * WINDOW_WIDTH
         self.window_height = 0.9 * WINDOW_HEIGHT
 
-        # self.screen = None
         self.screen = pygame.display.set_mode((self.window_width, self.window_height), pygame.RESIZABLE)
 
         self.cursor = Cursor()
         self.notes = []
+        self.hit_effects = []
 
-    def hit_effect(self, note: Note):
+    def add_hit_effect(self, note: Note):
         obj = note.get_obj()
-        for i in range(0, 100):
-            effect = pygame.draw.circle(self.screen, NOTE_COLOR, (obj.centerx, obj.centery), i, 5) 
-            # pygame.draw.rect(self.screen, NOTE_COLOR, effect)
-            pygame.display.flip()
-
+        effect = pygame.draw.circle(self.screen, NOTE_COLOR, 
+                                    (obj.centerx, obj.centery), 10, 5)
+        self.hit_effects.append(effect)
+        
     def update_screen(self) -> None:
         self.screen.fill((0, 0, 0)) # black
         # draw focus bar
         self.draw_focus_bar()
         # draw cursor
+        self.cursor.move()
         self.draw_cursor(self.cursor.get_obj())
         # draw all notes to the current frame
+        self.handle_notes()
         for note in self.notes:
             # get the note's obj(rect)
             self.draw_note(note.get_obj())
+
+        # handle notes
+        for note in self.notes:
+            note.move()
+            if note.is_touching_cursor(self.cursor.get_x(), self.cursor.get_y()): # hit
+                self.add_hit_effect(note)
+            if note.get_x() < 0: # miss
+                self.notes.remove(note)
+        
+        # render hit effects
+        for i in range(len(self.hit_effects)):
+            effect = self.hit_effects[i]
+            radius = effect.height//2
+            if radius < 100:
+                effect = pygame.draw.circle(self.screen, NOTE_COLOR,
+                                            (effect.centerx, effect.centery), 
+                                            radius+1, 5)
+                self.hit_effects[i] = effect
+            else:
+                self.hit_effects.remove(effect)
+                
+            if effect.top <= 1 or effect.left <= 1:
+                self.hit_effects.remove(effect)
             
     def display(self) -> None:
-        self.update_screen()
         pygame.display.flip()
     
     def draw_focus_bar(self) -> None:
@@ -114,7 +149,8 @@ class RhythmGame:
             prev_note_y = random.randint(math.ceil(BAR_Y + BAR_HEIGHT/2), math.ceil(BAR_Y + BAR_HEIGHT - NOTE_HEIGHT))
 
         if len(self.notes) < RhythmGame.min_notes:
-            note_y = random.randint(math.ceil(BAR_Y), math.ceil(BAR_Y + BAR_HEIGHT - NOTE_HEIGHT))
+            note_y = random.randint(math.ceil(BAR_Y), math.ceil(BAR_Y +
+                BAR_HEIGHT - NOTE_HEIGHT))
             if len(self.notes) > 0:
                 prev_note_x = self.notes[-1].get_x()
                 prev_note_y = self.notes[-1].get_y()
@@ -131,10 +167,10 @@ class RhythmGame:
                     # increase x 25%
                     note_x += RhythmGame.notes_distance * random.randint(1, 2)    
                 else:
+                    # or decrease y 75%
                     offset = prev_note_y - note_y
                     note_y += offset*0.25*random.randint(2, 4)
                 self.create_note(note_x, note_y)
-                # or decrease y 75%
 
     def create_note(self, x, y) -> None:
         self.notes.append(Note(x, y))
@@ -155,17 +191,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
 
-        game.cursor.move()
-
-        game.handle_notes()
-
-
-        for note in game.notes:
-            note.move()
-            if note.get_x() < BAR_X+BAR_WIDTH/2:
-                game.hit_effect(note)
-                game.notes.remove(note)
-
+        game.update_screen()
         game.display()
         
 if __name__ == "__main__":
