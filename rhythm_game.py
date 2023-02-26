@@ -41,7 +41,7 @@ class Cursor:
            self.obj = self.obj.move(0, dist)
     
     def eeg_move(self, voltage):
-        self.obj = self.obj.move(0, voltage*5)
+        self.obj = self.obj.move(0, voltage*1e2)
     
     def get_obj(self):
         return self.obj
@@ -198,8 +198,8 @@ def main():
 
         filtered_data = testRecorded.filter_data(receiver=receiver, seconds_sleep=0, padlen=2)
         average_voltages = testRecorded.average_voltages(filtered_data)
-        print("ave_volt:", average_voltages[0])
-        game.cursor.eeg_move(average_voltages[0])
+        # print("ave_volt:", average_voltages[0])
+        game.cursor.eeg_move(average_voltages.mean())
 
         game.update_screen()
         game.display()
