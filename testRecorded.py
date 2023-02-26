@@ -75,7 +75,6 @@ def filter_data(receiver, seconds_sleep=2, padlen=27):
     eeg_keys = ['EEG_' + str(i) for i in range(1, 9)]
     filt_eeg = df.copy()
     filt_eeg[eeg_keys] = filt_eeg[eeg_keys].apply(filtereeg, raw=True, padlen=padlen)
-    print(filt_eeg)
     time.sleep(seconds_sleep)
 
     return filt_eeg
@@ -84,7 +83,6 @@ def average_voltage(filt_eeg):
     filt_eeg = (filt_eeg-filt_eeg.mean())/filt_eeg.std()
     eeg_keys = ['EEG_' + str(i) for i in range(1, 9)]
     avg_voltage = np.nanmean(filt_eeg[eeg_keys])
-    print(avg_voltage)
     return avg_voltage
 
 def close_stream():
