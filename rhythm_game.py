@@ -3,6 +3,7 @@ import sys
 import random
 import time
 import math
+import testRecorded
 
 ##### CONFIG ###########
 pygame.init()
@@ -38,6 +39,9 @@ class Cursor:
            self.obj = self.obj.move(0, -dist)
         if key[pygame.K_DOWN] and self.obj.top + self.obj.height < BAR_Y + BAR_HEIGHT:
            self.obj = self.obj.move(0, dist)
+    
+    def eeg_move(self, power):
+        self.obj = self.obj.move(0, power+1*5)
     
     def get_obj(self):
         return self.obj
@@ -190,6 +194,11 @@ def main():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
+
+        testRecorded.init_stream(bufsize=0.1, winsize=0.1)
+        filtered_data = testRecorded.filter_data(seconds_sleep=0)
+        average_voltage = testRecorded.average_voltage(filtered_data)
+        game.cursor.eeg_move(average_voltage)
 
         game.update_screen()
         game.display()
